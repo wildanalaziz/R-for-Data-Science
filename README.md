@@ -1,3 +1,1 @@
-# R-for-Data-Science
-
-Materu untuk DSC
+Materi untuk DSC
