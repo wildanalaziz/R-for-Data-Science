@@ -1,0 +1,185 @@
+---
+title: "Exploratory Data Analysis"
+author: "Achmad Wildan Al Aziz"
+date: "October 16, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DT)
+library(ggplot2)
+library(corrplot)
+library(dplyr)
+```
+
+Exploratory data analysis(EDA) is an approach to data analysis for summarising and visualising the important characteristics of a data set. EDA is not a formal process with a strict set of rules. EDA is an important part of any data analysis because you always need to investigate the quality of your data. 
+
+#### Objective
+Your goal during EDA is to develop an understanding of your data. 
+
+- Discover any existing patterns
+- Identify mistakes
+- Suggest hypothesis that can be tested
+- Check assumptions
+- Identify relationships among explanatory variables
+- Assess direction and size of relationship between expplanatory and outcome variables
+
+***
+### Example of EDA
+
+#### Univariate
+
+##### Univariate Quantitative
+
+###### Measures of central tendancy
+
+- Mean
+- Median
+- Mode
+
+###### Measures of dispersion
+
+- Min
+- Max
+- Range
+- Quartiles
+- Variance
+- Standard deviation
+
+###### Other measures include
+
+- Skewness
+- Kurtosis
+
+##### Univariate Graphical
+
+- Histogram
+- Box plots
+- Bar plots
+- Kernel density plots
+- Bivariate
+- Bivariate Quantitative
+- Bivariate analysis include:
+
+- Crosstabs
+- Covariance
+- Correlation
+
+- Cluster analysis
+- Analysis of variance (ANOVA)
+- Factor analysis
+- Principal component analysis (PCA)
+- Bivariate Graphical
+- Graphical techniques include:
+
+- Scatterplot
+- Box plot
+
+### Diamonds Dataset
+
+Merupakan data harga berlian dan karakteristiknya.
+Variabel yang digunakan adalah sebagai berikut
+
+Variabel | Keterangan
+--------- | ------------------------------------------------------------------------------------------
+price | _price in_ ($US) ($326-$18,823)
+carat | _weight of the diamond_ (0.2-5.01)
+cut | _quality of the cut_ (Fair, Good, Very Good, Premium, Ideal)
+color | _diamond colour_,  from J (worst) to D (best)
+clarity | _a measurement of how clear the diamond is_ (I1 (worst), SI2, SI1, VS2, VS1, VVS2, VVS1, IF (best))
+x | _length in mm_ (0-10.74)
+y | _width in mm_ (0-58.9)
+z | _depth in mm_ (0-31.8)
+depth | _total depth percentage_ = z / mean(x, y) = 2 * z / (x + y), (43-79)
+table | _width of top of diamond relative to widest point_ (43-95)
+
+```{r Data, message=FALSE, warning=FALSE}
+data("diamonds")
+datatable(diamonds)
+```
+
+```{r}
+summary(diamonds)
+```
+
+##### Missing values
+
+grafik berikut untuk mengecej _missing values_
+```{r}
+library(naniar)
+gg_miss_var(diamonds, show_pct = TRUE)
+```
+
+tidak ada missing values pada data _diamonds_
+
+##### Visualization {.tabset}
+
+Berikut adalah korelasi antar variabel dari data _diamonds_ 
+```{r}
+num=diamonds[c('price','carat','x','y','z','depth','table')]
+corrplot(cor(num),type="full",method="square")
+```
+
+beberapa variabel terjadi multikolinearitas, yaitu variabel carat, x, y, z. Variabel _price_ berkorelasi positif cukup tinggi dengan variabel carat, x, y, z.
+
+###### Price
+
+berikut adalah histogram untuk variabel respon, _price_.
+```{r}
+ggplot(data = diamonds) +
+  geom_histogram(mapping = aes(x = price, fill=..count..), binwidth = 900)+
+    scale_y_continuous(name = "Frequency") +
+    scale_x_continuous(name = " Price ($US)") +
+    ggtitle("Frequency histogram Price of diamonds ($US)")
+```
+
+Tampak histogram _skew kanan_, sehingga variabel _price_ tidak berdistribusi normal. Mayoritas produsen memberikan harga sekitar 20000-4000 ($US). Sebagian besar Berlian harganya kurang dari $US 5000. Varibel Price dapat dilakukan transformasi.
+
+###### carat
+
+berikut adalah histogram untuk variabel, _carat_.
+```{r}
+ggplot(data = diamonds) +
+  geom_histogram(mapping = aes(x = carat, fill=..count..), binwidth = 0.4)+
+    scale_y_continuous(name = "carat") +
+    scale_x_continuous(name = " carat of the diamond") +
+    ggtitle("Frequency histogram carat of the diamond")
+```
+
+Tampak histogram _skew kanan_, sehingga variabel _carat_ tidak berdistribusi normal. Variabel _carat_ bernilai antara 0,2 hingga 5.01, tampak pada histogram _carat_ yang nilainya lebih dari 3 tidak muncul karena frekuensinya terlalu sedikit. Dapat dilakukan penyesuaian seperti histogram berikut.
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = diamonds) +
+  geom_histogram(mapping = aes(x = carat, fill=..count..), binwidth = 0.4)+
+    scale_y_continuous(name = "Frequency") +
+    scale_x_continuous(name = " weight of the diamond") +
+    ggtitle("Frequency histogram weight of the diamond") +
+    coord_cartesian(ylim = c(0, 100))
+```
+
+Atau dapat juga ditabelkan seperti tabel berikut.
+
+```{r message=FALSE, warning=FALSE}
+diamonds %>% count(cut_width(carat, 0.4))
+```
+
+###### Boxplot
+
+Berikut adalah Boxplot untuk setiap variabel numerik
+
+```{r message=FALSE, warning=FALSE}
+require(reshape2)
+ggplot(data = melt(num[,-1]), aes(x=variable, y=value)) +
+  geom_boxplot() +
+  facet_wrap(~variable, scales='free')
+```
+
+juga dapat ditampilkan Boxplot untuk variabel kategorik
+
+```{r message=FALSE, warning=FALSE}
+kat=diamonds[c('cut','color','clarity','price')]
+
+ggplot(data = kat, aes(x=cut, y=price)) +
+  geom_boxplot() 
+```
